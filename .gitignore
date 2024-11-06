@@ -1,6 +1,0 @@
-# Ignore Firebase configuration file
-main/src/main/resources/firebase.json
-
-# Optionally, ignore any other sensitive files
-*.env
-*.key
