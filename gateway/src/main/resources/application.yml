@@ -1,0 +1,46 @@
+server:
+  port: 8080 # Port where the gateway will run
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      discovery:
+        locator:
+          enabled: true # Enable service discovery for routing
+      routes:
+        - id: chat
+          uri: lb://chat
+          predicates:
+            - Path=/chat/**
+
+        - id: open_socket
+          uri: lb://chat
+          predicates:
+            - Path=/ws/**
+
+        - id: main
+          uri: lb://main
+          predicates:
+            - Path=/**
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Eureka server URL
+  instance:
+    prefer-ip-address: true
