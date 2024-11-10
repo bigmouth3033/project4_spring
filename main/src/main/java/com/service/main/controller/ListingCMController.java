@@ -1,8 +1,10 @@
 package com.service.main.controller;
 
+import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyDto;
 import com.service.main.service.customer.ListingCMService;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,4 +38,20 @@ public class ListingCMController {
         var customResult = listingCMService.updateListing(property);
         return ResponseEntity.ok(customResult);
     }
+
+    @GetMapping("get_host_listings")
+    public ResponseEntity<CustomPaging> getListings(@RequestParam int pageNumber, @RequestParam int pageSize, @RequestParam(required = false, defaultValue = "") String search, @RequestParam String status){
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var customPaging = listingCMService.getHostListing(pageNumber, pageSize, email, search, status);
+        return ResponseEntity.ok(customPaging);
+    }
+
+    @GetMapping("get_host_calendar_list")
+    public ResponseEntity<CustomResult> getHostCalendarList(){
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        var customResult = listingCMService.getAllListingOfHost(email);
+        return ResponseEntity.ok(customResult);
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.service.main.service.customer;
 
+import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyDto;
 import com.service.main.entity.Property;
@@ -8,8 +9,12 @@ import com.service.main.entity.PropertyAmenityId;
 import com.service.main.entity.PropertyImage;
 import com.service.main.repository.*;
 import com.service.main.service.ImageUploadingService;
+import com.service.main.service.PagingService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +56,9 @@ public class ListingCMService {
 
     @Autowired
     private BadgeRepository badgeRepository;
+
+    @Autowired
+    private PagingService pagingService;
 
 
     public CustomResult initializeListing(String email){
@@ -199,6 +207,33 @@ public class ListingCMService {
 
             return new CustomResult(200, "Success", null);
         }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+    public CustomPaging getHostListing(int pageNumber, int pageSize, String email, String search, String status){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("updatedAt").descending());
+
+            var listings = propertyRepository.findListingByUserId(user.getId(), search, status, pageable);
+
+            return pagingService.convertToCustomPaging(listings, pageNumber, pageSize);
+        } catch (Exception e) {
+            return new CustomPaging();
+        }
+    }
+
+    public CustomResult getAllListingOfHost(String email){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            var listings = propertyRepository.findListingByUserId(user.getId());
+
+            return new CustomResult(200, "Success", listings);
+
+        } catch (Exception ex){
             return new CustomResult(400, "Bad request", ex.getMessage());
         }
     }
