@@ -36,4 +36,11 @@ public class ListingCMController {
         var customResult = listingCMService.updateListing(property);
         return ResponseEntity.ok(customResult);
     }
+
+    @GetMapping("propertyCM")
+    public ResponseEntity<CustomResult> getAllProperties(){
+        var customResult = listingCMService.getAllProperties();
+        return ResponseEntity.ok(customResult);
+    }
+
 }

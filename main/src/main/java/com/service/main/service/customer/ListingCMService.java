@@ -202,4 +202,15 @@ public class ListingCMService {
             return new CustomResult(400, "Bad request", ex.getMessage());
         }
     }
+
+    public CustomResult getAllProperties(){
+        try{
+            var properties = propertyRepository.findAll();
+            return new CustomResult(200, "Success", properties);
+        } catch (Exception e) {
+            return new CustomResult(400, "Bad Request", e.getMessage());
+        }
+
+    }
+
 }
