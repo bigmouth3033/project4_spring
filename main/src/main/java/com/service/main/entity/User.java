@@ -45,6 +45,8 @@ public class User {
 
     private boolean status;
 
+    private String preferredName;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<UserDocumentImage> userDocumentImages;
