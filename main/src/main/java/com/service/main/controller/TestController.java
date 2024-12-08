@@ -15,9 +15,9 @@ public class TestController {
     @Autowired
     private ImageUploadingService imageUploadingService;
 
-    @PostMapping
-    public ResponseEntity<String> uploadImage(MultipartFile file) {
-        var image = imageUploadingService.upload(file);
-        return ResponseEntity.ok(image);
-    }
+//    @PostMapping
+//    public ResponseEntity<String> uploadImage(MultipartFile file) {
+//        var image = imageUploadingService.upload(file);
+//        return ResponseEntity.ok(image);
+//    }
 }
