@@ -1,13 +1,11 @@
 package com.service.main.service.admin;
 
-import com.service.main.dto.CreateAmenityDto;
-import com.service.main.dto.CustomPaging;
-import com.service.main.dto.CustomResult;
-import com.service.main.dto.UpdateAmenityDto;
+import com.service.main.dto.*;
 import com.service.main.entity.Amenity;
 import com.service.main.repository.AmenityRepository;
 import com.service.main.service.ImageUploadingService;
 import com.service.main.service.PagingService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -108,6 +106,39 @@ public class AmenityADService {
 
             return new CustomResult(200, "Success", null);
 
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", null);
+        }
+    }
+
+    public CustomResult changeAmenityStatus(ChangeAmenityStatusDto changeAmenityStatusDto){
+        try{
+            var amenity = amenityRepository.findById(changeAmenityStatusDto.getId());
+
+            if(amenity.isEmpty()){
+                return new CustomResult(404, "Not Found", null);
+            }
+            amenity.get().setStatus(changeAmenityStatusDto.isStatus());
+            amenityRepository.save(amenity.get());
+            return new CustomResult(200, "Success", null);
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", null);
+        }
+    }
+
+
+    public CustomResult getAllAmenity(){
+        try{
+            var amenities = amenityRepository.findAll();
+
+            var list = amenities.stream().map(amenity -> {
+                var amenityDto = new AmenityDto();
+                BeanUtils.copyProperties(amenity, amenityDto);
+
+                return amenityDto;
+            }).toList();
+
+            return new CustomResult(200, "Success", list);
         }catch (Exception ex){
             return new CustomResult(400, "Bad request", null);
         }

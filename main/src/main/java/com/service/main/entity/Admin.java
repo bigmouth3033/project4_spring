@@ -33,6 +33,8 @@ public class Admin {
 
     private String phoneNumber;
 
+    private String avatar;
+
     private Date createdAt = new Date();
 
     private Date updatedAt = new Date();

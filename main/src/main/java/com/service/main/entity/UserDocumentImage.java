@@ -19,6 +19,10 @@ public class UserDocumentImage {
 
     private String imageDescription;
 
+    private String type;
+
+    private String status;
+
     @ManyToOne
     @JoinColumn(name = "userId")
     @JsonBackReference

@@ -20,4 +20,5 @@ public class PolicyCMController {
         var customResult = policyCMService.getServices();
         return ResponseEntity.ok(customResult);
     }
+
 }

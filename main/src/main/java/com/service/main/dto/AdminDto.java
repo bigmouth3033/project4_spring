@@ -17,8 +17,6 @@ public class AdminDto {
 
     private String email;
 
-    private String password;
-
     private String firstName;
 
     private String lastName;
@@ -28,6 +26,8 @@ public class AdminDto {
     private Date dob;
 
     private String phoneNumber;
+
+    private String avatar;
 
     private Date createdAt = new Date();
 

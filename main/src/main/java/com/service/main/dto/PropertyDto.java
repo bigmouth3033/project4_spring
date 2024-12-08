@@ -48,6 +48,8 @@ public class PropertyDto {
 
     private boolean isPetAllowed;
 
+    private boolean isSmokingAllowed;
+
     private String additionalRules;
 
     private Integer maximumStay;
@@ -61,6 +63,8 @@ public class PropertyDto {
     private String detailToNote;
 
     private boolean isSelfCheckIn;
+
+    private String selfCheckInType;
 
     private String coordinatesX;
 
@@ -83,6 +87,8 @@ public class PropertyDto {
     private List<MultipartFile> newImages;
 
     private List<Integer> propertyAmenities;
+
+    private String suggestion;
 
     private Date createdAt;
 

@@ -16,6 +16,7 @@ public interface ManagedCityRepository extends JpaRepository<ManagedCity, Intege
     @Query(value = "select c from ManagedCity c where (c.cityName like %:cityName% or :cityName is null) and (c.isManaged = :status or :status is null)")
     Page<ManagedCity> findCity(@Param("cityName") String cityName, @Param("status") Boolean status, Pageable pageable);
 
-    @Query(value = "select c from ManagedCity c where c.isManaged = true")
+    @Query(value = "select c from ManagedCity c")
     List<ManagedCity> findManagedCity();
+
 }

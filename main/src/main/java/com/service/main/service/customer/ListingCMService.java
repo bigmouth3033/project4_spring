@@ -3,10 +3,8 @@ package com.service.main.service.customer;
 import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyDto;
-import com.service.main.entity.Property;
-import com.service.main.entity.PropertyAmenity;
-import com.service.main.entity.PropertyAmenityId;
-import com.service.main.entity.PropertyImage;
+import com.service.main.dto.PropertyGiuDto;
+import com.service.main.entity.*;
 import com.service.main.repository.*;
 import com.service.main.service.ImageUploadingService;
 import com.service.main.service.PagingService;
@@ -19,9 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ListingCMService {
@@ -59,6 +60,35 @@ public class ListingCMService {
 
     @Autowired
     private PagingService pagingService;
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private PropertyExceptionDateRepository propertyExceptionDateRepository;
+
+    @Autowired
+    private PropertyNotAvailableDateRepository propertyNotAvailableDateRepository;
+
+
+    public CustomResult pendingRequest(int propertyId){
+        try{
+            var property = propertyRepository.findById(propertyId);
+
+            if(property.isEmpty()){
+                return new CustomResult(404, "Not found", null);
+            }
+
+            property.get().setStatus("PENDING");
+            property.get().setSuggestion("");
+
+            propertyRepository.save(property.get());
+            return new CustomResult(200, "Success", null);
+
+        }catch (Exception e){
+            return new CustomResult(400, e.getMessage(), null);
+        }
+    }
 
 
     public CustomResult initializeListing(String email){
@@ -140,7 +170,6 @@ public class ListingCMService {
             var property = propertyRepository.findListingById(propertyDto.getId());
 
             BeanUtils.copyProperties(propertyDto, property);
-
 
             if(propertyDto.getManagedCityId() != null){
                 var managedCity = managedCityRepository.findById(propertyDto.getManagedCityId());
@@ -225,6 +254,133 @@ public class ListingCMService {
         }
     }
 
+    public CustomResult openDate(int propertyId, String start, String end){
+        try{
+            var property = propertyRepository.findListingById(propertyId);
+
+            if(property == null){
+                return new CustomResult(404, "Property not found", null);
+            }
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = dateFormat.parse(start);
+            Date endDate = dateFormat.parse(end);
+
+            var checkList = bookingRepository.checkIfBlockable(propertyId, startDate, endDate);
+
+            if(!checkList.isEmpty()){
+                return new CustomResult(403, "Some one already book that day", checkList);
+            }
+
+            Calendar calendar = Calendar.getInstance();
+
+            calendar.setTime(startDate);
+
+            while (!calendar.getTime().after(endDate)) {
+                var checkExist = propertyNotAvailableDateRepository.findByPropertyIdAndDate(propertyId, calendar.getTime());
+
+                if(checkExist != null){
+                    propertyNotAvailableDateRepository.delete(checkExist);
+                }
+
+                calendar.add(Calendar.DATE, 1);
+            }
+
+            return new CustomResult(200, "Success", null);
+
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+    public CustomResult blockDate(int propertyId, String start, String end){
+        try{
+            var property = propertyRepository.findListingById(propertyId);
+
+            if(property == null){
+                return new CustomResult(404, "Property not found", null);
+            }
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = dateFormat.parse(start);
+            Date endDate = dateFormat.parse(end);
+
+            var checkList = bookingRepository.checkIfBlockable(propertyId, startDate, endDate);
+
+            if(!checkList.isEmpty()){
+                return new CustomResult(403, "Some one already book that day", checkList);
+            }
+
+            Calendar calendar = Calendar.getInstance();
+
+            calendar.setTime(startDate);
+
+            while (!calendar.getTime().after(endDate)) {
+                var checkExist = propertyNotAvailableDateRepository.findByPropertyIdAndDate(propertyId, calendar.getTime());
+
+                if(checkExist == null){
+                    PropertyNotAvailableDate newPropertyNotAvailableDate = new PropertyNotAvailableDate();
+                    newPropertyNotAvailableDate.setDate(calendar.getTime());
+                    newPropertyNotAvailableDate.setProperty(property);
+                    propertyNotAvailableDateRepository.save(newPropertyNotAvailableDate);
+                }
+
+                calendar.add(Calendar.DATE, 1);
+            }
+
+            return new CustomResult(200, "Success", null);
+
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+    public CustomResult changePriceForDates(int propertyId, String start, String end, double price){
+        try{
+            var property = propertyRepository.findListingById(propertyId);
+
+            if(property == null){
+                return new CustomResult(404, "Property not found", null);
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = dateFormat.parse(start);
+            Date endDate = dateFormat.parse(end);
+
+            var checkList = bookingRepository.checkIfBlockable(propertyId, startDate, endDate);
+
+            if(!checkList.isEmpty()){
+                return new CustomResult(403, "Some one already book that day", checkList);
+            }
+
+            Calendar calendar = Calendar.getInstance();
+
+            calendar.setTime(startDate);
+
+            while (!calendar.getTime().after(endDate)) {
+                var checkExist = propertyExceptionDateRepository.findByPropertyIdAndDate(propertyId, calendar.getTime());
+
+                if(checkExist != null){
+                    checkExist.setBasePrice(price);
+                    propertyExceptionDateRepository.save(checkExist);
+                }
+
+                if(checkExist == null){
+                    PropertyExceptionDate newPropertyExceptionDate = new PropertyExceptionDate();
+                    newPropertyExceptionDate.setDate(calendar.getTime());
+                    newPropertyExceptionDate.setProperty(property);
+                    newPropertyExceptionDate.setBasePrice(price);
+                    propertyExceptionDateRepository.save(newPropertyExceptionDate);
+                }
+
+                calendar.add(Calendar.DATE, 1);
+            }
+
+            return new CustomResult(200, "Success", null);
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
     public CustomResult getAllListingOfHost(String email){
         try{
             var user = userRepository.findUserByEmail(email);
@@ -235,6 +391,88 @@ public class ListingCMService {
 
         } catch (Exception ex){
             return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+
+    // code giu
+    public CustomResult getListingById(int id) {
+        try {
+            var property = propertyRepository.findListingById(id);
+            // var booking = booking
+            if (property != null) {
+                PropertyGiuDto propertyDto = new PropertyGiuDto();
+                BeanUtils.copyProperties(property, propertyDto);
+                propertyDto.setUser(property.getUser());
+
+                if (property.getManagedCity() != null) {
+                    propertyDto.setManagedCityId(property.getManagedCity().getId());
+                }
+
+                if (property.getRefundPolicy() != null) {
+                    propertyDto.setRefundPolicyId(property.getRefundPolicy().getId());
+                }
+
+                if (property.getUser() != null) {
+                    propertyDto.setUserId(property.getUser().getId());
+                }
+
+                if (property.getPropertyCategory() != null) {
+                    propertyDto.setPropertyCategoryID(property.getPropertyCategory().getId());
+                }
+
+                if (property.getInstantBookRequirement() != null) {
+                    propertyDto.setInstantBookRequirementID(property.getInstantBookRequirement().getId());
+                }
+
+
+                List<Integer> amenityList = new ArrayList<>();
+                for (var amenity : property.getPropertyAmenities()) {
+                    amenityList.add(amenity.getAmenity().getId());
+                }
+                propertyDto.setPropertyAmenities(amenityList);
+
+                List<String> imageList = new ArrayList<>();
+                for (var image : property.getPropertyImages()) {
+                    imageList.add(image.getImageName());
+                }
+                propertyDto.setPropertyImages(imageList);
+
+                // Lấy amenity
+                List<Amenity> amenityListOb = property.getPropertyAmenities()
+                        .stream()
+                        .map(propertyAmenity -> propertyAmenity.getAmenity())
+                        .collect(Collectors.toList());
+                propertyDto.setAmenity(amenityListOb);
+                // Lấy date thay đổi base-price
+                List<PropertyExceptionDate> propertyExceptionDate = property.getPropertyExceptionDates()
+                        .stream()
+                        .map(propertyException -> propertyException)
+                        .collect(Collectors.toList());
+                propertyDto.setExceptionDates(propertyExceptionDate);
+                // Lay date bi host block
+                List<PropertyNotAvailableDate> propertyNotAvailableDates = property.getPropertyNotAvailableDates()
+                        .stream()
+                        .map(notAvailableDates -> notAvailableDates)
+                        .collect(Collectors.toList());
+                propertyDto.setNotAvailableDates(propertyNotAvailableDates);
+                // Lấy danh sách các Booking theo propertyId
+                List<Booking> bookings = property.getBookings();
+
+                var listBookingAccepStatus = bookings.stream()
+                        .filter((booking) -> booking.getStatus().equalsIgnoreCase("ACCEPT")).toList();
+
+                List<BookDateDetail> bookDateDetails = listBookingAccepStatus.stream()
+                        .flatMap(booking -> booking.getBookDateDetails().stream())
+                        .collect(Collectors.toList());
+
+                propertyDto.setBookDateDetails(bookDateDetails);
+
+                return new CustomResult(200, "Success", propertyDto);
+            }
+            return new CustomResult(404, "Not found", null);
+        } catch (Exception e) {
+            return new CustomResult(400, "Bad request", e.getMessage());
         }
     }
 }

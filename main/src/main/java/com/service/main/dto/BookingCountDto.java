@@ -17,4 +17,5 @@ public class BookingCountDto {
     private long checkInHosting;
     private long upcomingHosting;
     private long pendingReviewHosting;
+    private long reservedHosting;
 }

@@ -15,4 +15,8 @@ public class CategoryDto {
     private String description;
 
     private String categoryImage;
+
+    private boolean status;
+
+    private Integer propertyCount;
 }

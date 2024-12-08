@@ -1,6 +1,7 @@
 package com.service.main.controller;
 
 import com.service.main.dto.ChangeCityStatusDto;
+import com.service.main.dto.ChangeManagedCityDto;
 import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.service.admin.CityADService;
@@ -26,6 +27,20 @@ public class CityADController {
     @RolesAllowed({"ADMIN","UPDATE_CITY"})
     public ResponseEntity<CustomResult> getCities(@ModelAttribute ChangeCityStatusDto changeCityStatusDto){
         var customResult =  cityADService.changeCityStatus(changeCityStatusDto);
+        return ResponseEntity.ok(customResult);
+    }
+
+    @GetMapping("all_cities")
+    @RolesAllowed({"ADMIN","EMPLOYEE"})
+    public ResponseEntity<CustomResult> getAllCities(){
+        var customResult =  cityADService.getCities();
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PutMapping("change_employee_managed_city")
+    @RolesAllowed({"ADMIN","EMPLOYEE_MANAGEMENT"})
+    public ResponseEntity<CustomResult> changeEmployeeManagedCity(@ModelAttribute ChangeManagedCityDto changeManagedCityDto){
+        var customResult =  cityADService.changeUserManagedCity(changeManagedCityDto);
         return ResponseEntity.ok(customResult);
     }
 }

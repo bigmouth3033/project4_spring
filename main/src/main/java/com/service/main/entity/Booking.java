@@ -26,6 +26,10 @@ public class Booking {
 
     private int totalPerson;
 
+    private int children;
+
+    private int adult;
+
     private String bookingType;
 
     private String selfCheckInInstruction;

@@ -1,8 +1,6 @@
 package com.service.main.service.customer;
 
-import com.service.main.dto.CustomResult;
-import com.service.main.dto.LoginDto;
-import com.service.main.dto.RegisterDto;
+import com.service.main.dto.*;
 import com.service.main.entity.AuthenticationCode;
 import com.service.main.entity.User;
 import com.service.main.repository.AuthenticationCodeRepository;
@@ -11,6 +9,7 @@ import com.service.main.repository.UserRepository;
 import com.service.main.service.JwtService;
 import com.service.main.service.MailBodyService;
 import com.service.main.service.MailService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,9 +17,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 @Service
 public class AuthCMService {
@@ -80,7 +77,7 @@ public class AuthCMService {
             newUser.setLastName(registerDto.getLastName());
             newUser.setEmail(registerDto.getEmail());
             newUser.setPassword(passwordEncoder.encode(registerDto.getPassword()));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-M-d");
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
             newUser.setDob(formatter.parse(registerDto.getDob()));
             newUser.setStatus(true);
             newUser.setVerified(true);
@@ -137,8 +134,29 @@ public class AuthCMService {
         try{
             var user = userRepository.findUserByEmail(email);
             if(user != null){
-                return new CustomResult(200, "Success", user);
+
+
+                var userAuthDto = new UserAuthDto();
+                BeanUtils.copyProperties(user, userAuthDto);
+
+                List<BadgeDto> badges = new ArrayList<>();
+
+                for(var badge : user.getUserBadges()){
+                    var newBadgeDto = new BadgeDto();
+                    newBadgeDto.setId(badge.getBadge().getId());
+                    newBadgeDto.setName(badge.getBadge().getName());
+                    newBadgeDto.setDescription(badge.getBadge().getDescription());
+                    badges.add(newBadgeDto);
+                }
+
+                userAuthDto.setBadgeList(badges);
+                userAuthDto.setHost(!user.getProperties().isEmpty());
+
+                return new CustomResult(200, "Success", userAuthDto);
             }
+
+
+
 
             return new CustomResult(404, "User not found", null);
         }catch (Exception ex){

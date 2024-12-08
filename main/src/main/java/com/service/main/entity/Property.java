@@ -44,7 +44,7 @@ public class Property {
 
     private int maximumGuest;
 
-    private int numberOfBathRoom;
+   private int numberOfBathRoom;
 
     private int numberOfBedRoom;
 
@@ -52,23 +52,34 @@ public class Property {
 
     private boolean isPetAllowed;
 
+    private boolean isSmokingAllowed;
+
+    @Column(columnDefinition = "TEXT")
     private String additionalRules;
 
     private Integer maximumStay;
 
     private Integer minimumStay;
 
+    @Column(columnDefinition = "TEXT")
     private String aboutProperty;
 
+    @Column(columnDefinition = "TEXT")
     private String guestAccess;
 
+    @Column(columnDefinition = "TEXT")
     private String detailToNote;
 
     private boolean isSelfCheckIn;
 
+    private String selfCheckInType;
+
     private String coordinatesX;
 
     private String coordinatesY;
+
+    @Column(columnDefinition = "TEXT")
+    private String suggestion;
 
     private String status;
 
@@ -119,4 +130,10 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Favourite> favourites;
+
+
+    //them 5/12
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<Booking> bookings;
 }

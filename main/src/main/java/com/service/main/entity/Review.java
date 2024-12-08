@@ -27,6 +27,8 @@ public class Review {
 
     private Integer communicationScore;
 
+    private Integer toUser;
+
     private String review;
 
     private Date createdAt = new Date();

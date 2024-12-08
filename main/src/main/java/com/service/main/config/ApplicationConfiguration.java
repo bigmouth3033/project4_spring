@@ -38,10 +38,7 @@ public class ApplicationConfiguration {
 
     @Bean
     public UserDetailsService userDetailsService() {
-
-
         return new UserDetailsService() {
-
             @Override
             @Transactional
             public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

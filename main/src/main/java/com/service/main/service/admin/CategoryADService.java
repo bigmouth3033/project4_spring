@@ -1,18 +1,17 @@
 package com.service.main.service.admin;
 
-import com.service.main.dto.CreateCategoryDto;
-import com.service.main.dto.CustomPaging;
-import com.service.main.dto.CustomResult;
-import com.service.main.dto.UpdateCategoryDto;
+import com.service.main.dto.*;
 import com.service.main.entity.PropertyCategory;
 import com.service.main.repository.PropertyCategoryRepository;
 import com.service.main.service.ImageUploadingService;
 import com.service.main.service.PagingService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import java.util.List;
 
 @Service
 public class CategoryADService {
@@ -30,18 +29,32 @@ public class CategoryADService {
     public CustomPaging getCategoryPaging(int pageNumber, int pageSize, String search, String status){
         try{
             Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
+            Page<PropertyCategory> pagedCategory = null;
+
             if(status.equals("true")){
-                var pagedCategory = propertyCategoryRepository.getCategory(search, true, pageable);
-                return pagingService.convertToCustomPaging(pagedCategory, pageNumber, pageSize);
+                 pagedCategory = propertyCategoryRepository.getCategory(search, true, pageable);
+
             }
 
             if(status.equals("false")){
-                var pagedCategory = propertyCategoryRepository.getCategory(search, false, pageable);
-                return pagingService.convertToCustomPaging(pagedCategory, pageNumber, pageSize);
+                 pagedCategory = propertyCategoryRepository.getCategory(search, false, pageable);
+
             }
 
-            var pagedCategory = propertyCategoryRepository.getCategory(search, null, pageable);
-            return pagingService.convertToCustomPaging(pagedCategory, pageNumber, pageSize);
+            if(!status.equals("true") && !status.equals("false")){
+                pagedCategory = propertyCategoryRepository.getCategory(search, null, pageable);
+            }
+
+             List<CategoryDto> categoryDtoList = pagedCategory.getContent().stream().map(category -> {
+                 CategoryDto categoryDto = new CategoryDto();
+                 BeanUtils.copyProperties(category, categoryDto);
+                 categoryDto.setPropertyCount(category.getProperties().size());
+                 return categoryDto;
+             }).toList();
+
+            Page<CategoryDto> updatedPage = new PageImpl<>(categoryDtoList, pageable, pagedCategory.getTotalElements());
+
+            return pagingService.convertToCustomPaging(updatedPage, pageNumber, pageSize);
         }catch (Exception e){
             return new CustomPaging();
         }
@@ -74,6 +87,39 @@ public class CategoryADService {
 
             return new CustomResult(200, "Success", null);
 
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+    public CustomResult changeCategoryStatus(@ModelAttribute ChangeCategoryStatusDto changeCategoryStatusDto){
+        try{
+            var category = propertyCategoryRepository.findById(changeCategoryStatusDto.getId());
+
+            if(category.isEmpty()){
+                return new CustomResult(404, "Not found", null);
+            }
+
+            category.get().setStatus(changeCategoryStatusDto.isStatus());
+
+            propertyCategoryRepository.save(category.get());
+            return new CustomResult(200, "Success", null);
+        }catch (Exception ex){
+            return new CustomResult(400, "Bad request", ex.getMessage());
+        }
+    }
+
+    public CustomResult getAllCategory(){
+        try{
+            var categories = propertyCategoryRepository.findAll();
+
+            List<CategoryDto> categoryDtoList = categories.stream().map(category -> {
+                var categoryDto = new CategoryDto();
+                BeanUtils.copyProperties(category, categoryDto);
+                return categoryDto;
+            }).toList();
+
+            return new CustomResult(200, "OK", categoryDtoList);
         }catch (Exception ex){
             return new CustomResult(400, "Bad request", ex.getMessage());
         }

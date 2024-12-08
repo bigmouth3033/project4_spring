@@ -18,6 +18,6 @@ public interface PropertyCategoryRepository extends JpaRepository<PropertyCatego
     @Query(value = "select p from PropertyCategory p where (:search is null or p.categoryName like %:search%) and (:status is null or p.status = :status)")
     Page<PropertyCategory> getCategory(@Param("search") String search, @Param("status") Boolean status, Pageable pageable);
 
-    @Query(value = "select new com.service.main.dto.CategoryDto(c.id, c.categoryName, c.description, c.categoryImage) from PropertyCategory c where c.status = true")
+    @Query(value = "select new com.service.main.dto.CategoryDto(c.id, c.categoryName, c.description, c.categoryImage, c.status,0) from PropertyCategory c")
     List<CategoryDto> getAvailableCategory();
 }

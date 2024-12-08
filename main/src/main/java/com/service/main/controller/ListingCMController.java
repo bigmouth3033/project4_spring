@@ -3,6 +3,7 @@ package com.service.main.controller;
 import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyDto;
+import com.service.main.dto.UpdateExceptionDateDto;
 import com.service.main.service.customer.ListingCMService;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,5 +54,36 @@ public class ListingCMController {
         var customResult = listingCMService.getAllListingOfHost(email);
         return ResponseEntity.ok(customResult);
     }
+
+    @PutMapping("update_exception_date")
+    public ResponseEntity<CustomResult> updateExceptionDate(@ModelAttribute UpdateExceptionDateDto updateExceptionDateDto){
+        var customResult = listingCMService.changePriceForDates(updateExceptionDateDto.getPropertyId(), updateExceptionDateDto.getStart(), updateExceptionDateDto.getEnd(), updateExceptionDateDto.getPrice());
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PutMapping("update_not_available_date")
+    public ResponseEntity<CustomResult> updateNotAvailableDate(@ModelAttribute UpdateExceptionDateDto updateExceptionDateDto){
+        var customResult = listingCMService.blockDate(updateExceptionDateDto.getPropertyId(), updateExceptionDateDto.getStart(), updateExceptionDateDto.getEnd());
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PutMapping("open_not_available_date")
+    public ResponseEntity<CustomResult> openNotAvailableDate(@ModelAttribute UpdateExceptionDateDto updateExceptionDateDto){
+        var customResult = listingCMService.openDate(updateExceptionDateDto.getPropertyId(), updateExceptionDateDto.getStart(), updateExceptionDateDto.getEnd());
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PutMapping("public_request")
+    public ResponseEntity<CustomResult> publicRequest(int propertyID){
+        var customResult = listingCMService.pendingRequest(propertyID);
+        return ResponseEntity.ok(customResult);
+    }
+
+    @GetMapping
+    public ResponseEntity<CustomResult> getProperty(@RequestParam int id) {
+        CustomResult result = listingCMService.getListingById(id);
+        return ResponseEntity.ok(result);
+    }
+
 
 }

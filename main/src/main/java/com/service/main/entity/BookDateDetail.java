@@ -27,4 +27,9 @@ public class BookDateDetail {
     private Date night;
 
     private double price;
+
+    @ManyToOne
+    @JoinColumn(name = "propertyId")
+    @JsonBackReference
+    private Property property;
 }

@@ -1,29 +1,33 @@
 package com.service.chat.service;
 
+import com.service.chat.dto.AddGroupDto;
 import com.service.chat.dto.ChatMessageDto;
-import com.service.chat.dto.ChatRoomDto;
-import com.service.chat.dto.ChatRoomUserDto;
+import com.service.chat.dto.CustomPaging;
 import com.service.chat.dto.CustomResult;
 import com.service.chat.dto.response.RoomListDto;
-import com.service.chat.dto.response.RoomUserDto;
+import com.service.chat.dto.response.UserDto;
 import com.service.chat.entity.ChatRoom;
 import com.service.chat.entity.ChatRoomUser;
 import com.service.chat.entity.Message;
 import com.service.chat.repository.ChatRoomRepository;
 import com.service.chat.repository.ChatRoomUserRepository;
 import com.service.chat.repository.MessageRepository;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
+
+
+    private final RestClient restClient;
 
     private final ChatRoomRepository chatRoomRepository;
 
@@ -31,31 +35,58 @@ public class ChatService {
 
     private final MessageRepository messageRepository;
 
-    public ChatService(ChatRoomRepository chatRoomRepository, ChatRoomUserRepository chatRoomUserRepository, MessageRepository messageRepository) {
+    public ChatService(ChatRoomRepository chatRoomRepository, ChatRoomUserRepository chatRoomUserRepository, MessageRepository messageRepository, RestClient restClient) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomUserRepository = chatRoomUserRepository;
         this.messageRepository = messageRepository;
+        this.restClient = restClient;
+    }
+
+    public CustomResult addNewFriend(int userId, int friendId) {
+        try{
+            var listFriend = chatRoomUserRepository.findAllFriends(userId);
+
+            if(listFriend.contains((long) friendId)){
+                return new CustomResult(403, "Already friend", null);
+            }
+
+            var newChatGroup = new ChatRoom();
+            chatRoomRepository.save(newChatGroup);
+            var newRoomUser1 = new ChatRoomUser();
+            newRoomUser1.setChatRoom(newChatGroup);
+            newRoomUser1.setUserId((long) userId);
+            var newRoomUser2 = new ChatRoomUser();
+            newRoomUser2.setChatRoom(newChatGroup);
+            newRoomUser2.setUserId((long) friendId);
+            chatRoomUserRepository.save(newRoomUser1);
+            chatRoomUserRepository.save(newRoomUser2);
+            return new CustomResult(200, "Success", newChatGroup.getId());
+        }catch (Exception e){
+            return new CustomResult(400, "Bad request", null);
+        }
     }
 
     public List<Long> getChatRoomById(Long id) {
         return chatRoomRepository.findChatRoomWithUsers(id);
     }
 
-    public Object testOneToManyQuery(Long id) {
-        ChatRoom result = chatRoomRepository.testQueryOneToMany(id);
-//        var chatRoomDto = new ChatRoomDto();
-//        BeanUtils.copyProperties(result, chatRoomDto);
-//        chatRoomDto.setMessages(null);
-//        List<ChatRoomUserDto> chatRoomUserDtoList =  result.getRoomUsers().stream().map(u -> {
-//            ChatRoomUserDto chatRoomUserDto = new ChatRoomUserDto();
-//            chatRoomUserDto.setId(u.getId());
-//            chatRoomUserDto.setUserId(u.getUserId());
-//            return chatRoomUserDto;
-//        }).toList();
-//
-//        chatRoomDto.setRoomUsers(chatRoomUserDtoList);
+    public CustomResult searchForNewFriend(int userId, String search) {
+        try {
+            var listFriend = chatRoomUserRepository.findAllFriends(userId);
 
-        return result.getRoomUsers();
+            var result = restClient.get().uri(uriBuilder ->
+                    uriBuilder.path("/userCM/search_user_chat")
+                            .queryParam("search", search)
+                            .queryParam("userId", userId)
+                            .queryParam("friendsId", listFriend).build())
+                    .retrieve()
+                    .body(List.class);
+
+            return new CustomResult(200, "Success", result);
+
+        } catch (Exception e) {
+            return new CustomResult(400, "Bad request", e.getMessage());
+        }
     }
 
     public CustomResult getAllChatRoomOfUser(Long id) {
@@ -66,10 +97,32 @@ public class ChatService {
 
             for (ChatRoomUser room : chatRoom) {
                 var newRoom = new RoomListDto();
+
+                newRoom.setName(room.getChatRoom().getName());
+
                 newRoom.setRoomId(room.getChatRoom().getId());
-                newRoom.setUserIDs(chatRoomUserRepository.getUserByChatRoomId(room.getChatRoom().getId()));
+                var idLists = chatRoomUserRepository.getUserByChatRoomId(room.getChatRoom().getId());
+
+                List<UserDto> listUser = new ArrayList<>();
+                for (var uid : idLists) {
+                    var userInfo = restClient.get().uri("/userCM/get_user_info_by_id/" + uid).retrieve().body(UserDto.class);
+                    listUser.add(userInfo);
+                }
+                newRoom.setUsers(listUser);
+                var message = messageRepository.findLastMessageByChatRoomId(room.getChatRoom().getId());
+                if (message != null) {
+                    newRoom.setLastMessage(message.getMessage());
+                    newRoom.setLastestMessageDate(message.getCreatedAt());
+                }else{
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.set(2000, Calendar.JANUARY, 1); // January 1, 2000
+                    newRoom.setLastestMessageDate(calendar.getTime());
+                }
+
                 listRoom.add(newRoom);
             }
+
+            listRoom.sort((r1, r2) -> r2.getLastestMessageDate().compareTo(r1.getLastestMessageDate()));
 
             return new CustomResult(200, "Success", listRoom);
 
@@ -90,6 +143,48 @@ public class ChatService {
             messageRepository.save(newMessage);
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    public CustomPaging getRoomMessage(int pageNumber, int pageSize, int roomId) {
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Order.desc("id")));
+            var messages = messageRepository.findAllByChatRoomId(roomId, pageable);
+
+            var customPaging = new CustomPaging();
+            customPaging.setStatus(200);
+            customPaging.setMessage("Success");
+            customPaging.setCurrentPage(pageNumber);
+            customPaging.setPageSize(pageSize);
+            customPaging.setTotalPages(messages.getTotalPages());
+            customPaging.setTotalCount(messages.getTotalElements());
+            customPaging.setData(messages.getContent());
+
+            return customPaging;
+        } catch (Exception e) {
+            var customPaging = new CustomPaging();
+            customPaging.setMessage(e.getMessage());
+            return customPaging;
+        }
+    }
+
+    public CustomResult createNewGroupChat(AddGroupDto addGroupDto) {
+        try{
+            var newGroup = new ChatRoom();
+            newGroup.setName(addGroupDto.getGroupName());
+            chatRoomRepository.save(newGroup);
+
+            for(var member : addGroupDto.getMembers()) {
+                var newMember = new ChatRoomUser();
+                newMember.setChatRoom(newGroup);
+                newMember.setUserId((long) member);
+                chatRoomUserRepository.save(newMember);
+            }
+
+            return new CustomResult(200, "Success", newGroup.getId());
+
+        }catch (Exception e){
+            return new CustomResult(400, "Bad request", null);
         }
     }
 }

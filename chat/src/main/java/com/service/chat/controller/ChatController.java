@@ -1,14 +1,14 @@
 package com.service.chat.controller;
 
+import com.service.chat.dto.AddFriend;
+import com.service.chat.dto.AddGroupDto;
+import com.service.chat.dto.CustomPaging;
 import com.service.chat.dto.CustomResult;
 import com.service.chat.dto.response.RoomUserDto;
 import com.service.chat.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("chat")
@@ -29,13 +29,28 @@ public class ChatController {
         return ResponseEntity.ok(customResult);
     }
 
-    @GetMapping("test_query")
-    public ResponseEntity<?> test(@RequestParam Long roomId){
-        var chatRoom = chatService.testOneToManyQuery(roomId);
-
-
-        var newCustomResult = new CustomResult(200, "Success", chatRoom);
-
-        return ResponseEntity.ok(newCustomResult);
+    @GetMapping("get_room_messages")
+    public ResponseEntity<CustomPaging> getChatRoomMessages(@RequestParam int roomId, @RequestParam int pageNumber, @RequestParam int pageSize){
+        var customPaging = chatService.getRoomMessage(pageNumber, pageSize, roomId);
+        return ResponseEntity.ok(customPaging);
     }
+
+    @GetMapping("search_new_frient")
+    public ResponseEntity<CustomResult> searchNewFriend(@RequestParam int userId, @RequestParam(required = false, defaultValue = "") String search){
+        var customResult = chatService.searchForNewFriend(userId, search);
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PostMapping("add_new_friend")
+    public ResponseEntity<CustomResult> addNewFriend(@ModelAttribute AddFriend addFriend){
+        var customResult = chatService.addNewFriend(addFriend.getUserId(),addFriend.getFriendId());
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PostMapping("add_new_group")
+    public ResponseEntity<CustomResult> addNewGroup(@ModelAttribute AddGroupDto addGroupDto){
+        var customResult = chatService.createNewGroupChat(addGroupDto);
+        return ResponseEntity.ok(customResult);
+    }
+
 }

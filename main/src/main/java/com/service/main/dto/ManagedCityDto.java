@@ -8,10 +8,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ManagedCityDto {
-
     private Integer id;
 
     private String cityName;
 
     private boolean isManaged;
+
+    private Integer propertyCount;
 }

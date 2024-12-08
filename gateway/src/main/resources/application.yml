@@ -9,13 +9,11 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "http://localhost:5173"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:51318"
+              - "http://localhost:7500"
+            allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
       discovery:
@@ -30,13 +28,12 @@ spring:
         - id: open_socket
           uri: lb://chat
           predicates:
-            - Path=/ws/**
+            - Path=/ws
 
         - id: main
           uri: lb://main
           predicates:
             - Path=/**
-
 
 eureka:
   client:
