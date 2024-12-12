@@ -4,9 +4,12 @@ import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyDto;
 import com.service.main.service.customer.ListingCMService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("listingCM")
@@ -38,8 +41,18 @@ public class ListingCMController {
     }
 
     @GetMapping("propertyCM")
-    public ResponseEntity<CustomResult> getAllProperties(){
-        var customResult = listingCMService.getAllProperties();
+    public ResponseEntity<CustomResult> getAllProperties(
+            @RequestParam(required = false) String propertyType,
+            @RequestParam(required = false) String isInstant,
+            @RequestParam(required = false) Boolean isSelfCheckIn,
+            @RequestParam(required = false) Boolean isPetAllowed,
+            @RequestParam(required = false) List<Integer> amenities,
+            @RequestParam(required = false) List<Double> priceRange,
+            @RequestParam(required = false) Integer room,
+            @RequestParam(required = false) Integer bed,
+            @RequestParam(required = false) Integer bathRoom,
+            @RequestParam(required = false) Integer categoryId){
+        var customResult = listingCMService.getAllProperties(categoryId, propertyType, amenities, isInstant, isSelfCheckIn, isPetAllowed, priceRange, room, bed, bathRoom);
         return ResponseEntity.ok(customResult);
     }
 

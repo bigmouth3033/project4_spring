@@ -9,8 +9,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableScheduling
-public class MainApplication {
 
+public class MainApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(MainApplication.class, args);
 	}

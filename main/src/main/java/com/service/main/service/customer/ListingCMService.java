@@ -10,6 +10,7 @@ import com.service.main.repository.*;
 import com.service.main.service.ImageUploadingService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -191,9 +192,6 @@ public class ListingCMService {
                     propertyAmenityRepository.save(newAmenity);
                 }
             }
-
-
-
             property.setUpdatedAt(new Date());
             propertyRepository.save(property);
 
@@ -203,9 +201,42 @@ public class ListingCMService {
         }
     }
 
-    public CustomResult getAllProperties(){
+    public CustomResult getAllProperties(Integer categoryId,
+                                         String propertyType,
+                                         List<Integer> amenities,
+                                         String isInstant,
+                                         Boolean isSelfCheckIn,
+                                         Boolean isPetAllowed,
+                                         List<Double> priceRange,
+                                         Integer room,
+                                         Integer bed,
+                                         Integer bathRoom){
         try{
-            var properties = propertyRepository.findAll();
+            //client gửi null nhưng spring tự convert thành "" =>  chuyển về null
+            if(propertyType.isEmpty()){
+                propertyType = null;
+            }
+
+            if(isInstant.isEmpty()){
+                isInstant = null;
+            }
+
+
+            Double minPrice = priceRange != null && priceRange.size() > 0 ? priceRange.get(0) : null;
+            Double maxPrice = priceRange != null && priceRange.size() > 1 ? priceRange.get(1) : null;
+
+            // Gọi phương thức với các tham số đã phân tách
+            List<Property> properties = propertyRepository.findPropertiesWithSearchAndFilter(
+                    categoryId,
+                    propertyType,
+                    amenities,
+                    isInstant, isSelfCheckIn, isPetAllowed,
+                    minPrice,
+                    maxPrice,
+                    room,
+                    bed,
+                    bathRoom);
+
             return new CustomResult(200, "Success", properties);
         } catch (Exception e) {
             return new CustomResult(400, "Bad Request", e.getMessage());
