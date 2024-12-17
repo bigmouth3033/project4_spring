@@ -189,6 +189,8 @@ public class ListingCMService {
             if(propertyDto.getInstantBookRequirementID() != null){
                 var badge = badgeRepository.findById(propertyDto.getInstantBookRequirementID());
                 property.setInstantBookRequirement(badge.get());
+            }else{
+                property.setInstantBookRequirement(null);
             }
 
             propertyImageRepository.deleteAllByPropertyId(property.getId());
@@ -396,10 +398,12 @@ public class ListingCMService {
 
 
     // code giu
+
+    // code giu
     public CustomResult getListingById(int id) {
         try {
             var property = propertyRepository.findListingById(id);
-            // var booking = booking
+
             if (property != null) {
                 PropertyGiuDto propertyDto = new PropertyGiuDto();
                 BeanUtils.copyProperties(property, propertyDto);
@@ -424,7 +428,6 @@ public class ListingCMService {
                 if (property.getInstantBookRequirement() != null) {
                     propertyDto.setInstantBookRequirementID(property.getInstantBookRequirement().getId());
                 }
-
 
                 List<Integer> amenityList = new ArrayList<>();
                 for (var amenity : property.getPropertyAmenities()) {
@@ -456,16 +459,18 @@ public class ListingCMService {
                         .map(notAvailableDates -> notAvailableDates)
                         .collect(Collectors.toList());
                 propertyDto.setNotAvailableDates(propertyNotAvailableDates);
+
                 // Lấy danh sách các Booking theo propertyId
                 List<Booking> bookings = property.getBookings();
 
                 var listBookingAccepStatus = bookings.stream()
-                        .filter((booking) -> booking.getStatus().equalsIgnoreCase("ACCEPT")).toList();
+                        .filter((booking) -> booking.getStatus().equalsIgnoreCase("ACCEPT")
+                                || booking.getStatus().equalsIgnoreCase("TRANSACTIONPENDDING"))
+                        .toList();
 
                 List<BookDateDetail> bookDateDetails = listBookingAccepStatus.stream()
                         .flatMap(booking -> booking.getBookDateDetails().stream())
                         .collect(Collectors.toList());
-
                 propertyDto.setBookDateDetails(bookDateDetails);
 
                 return new CustomResult(200, "Success", propertyDto);

@@ -106,7 +106,16 @@ public class ChatService {
                 List<UserDto> listUser = new ArrayList<>();
                 for (var uid : idLists) {
                     var userInfo = restClient.get().uri("/userCM/get_user_info_by_id/" + uid).retrieve().body(UserDto.class);
-                    listUser.add(userInfo);
+                    if(userInfo != null){
+                        listUser.add(userInfo);
+                    }else{
+                        var admin =new UserDto();
+                        admin.setId(0);
+                        admin.setFirstName("UrbanNest");
+                        admin.setLastName("Admin");
+                        admin.setAvatar( "https://firebasestorage.googleapis.com/v0/b/eproject4-3c13d.appspot.com/o/8fa6a3e3-263f-4be9-bc42-5d0c9f2c6175.png?alt=media");
+                        listUser.add(admin);
+                    }
                 }
                 newRoom.setUsers(listUser);
                 var message = messageRepository.findLastMessageByChatRoomId(room.getChatRoom().getId());

@@ -69,4 +69,11 @@ public class BookingCMController {
         return ResponseEntity.ok(customResult);
     }
 
+    @GetMapping("getBookingById")
+    public ResponseEntity<CustomResult> getBooking(@RequestParam() Integer bookingId) {
+        var customResult = bookingCMService.getBooking(bookingId);
+        return ResponseEntity.ok(customResult);
+    }
+
+
 }

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -34,11 +35,15 @@ public class Booking {
 
     private String selfCheckInInstruction;
 
-    private Date createdAt = new Date();
+    private double amount;
 
-    private Date updatedAt = new Date();
+    private LocalDateTime createdAt =  LocalDateTime.now();
+
+    private LocalDateTime updatedAt =  LocalDateTime.now();
 
     private String status;
+
+    private String bookingCode;
 
     @ManyToOne
     @JoinColumn(name = "propertyId")

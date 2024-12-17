@@ -14,7 +14,6 @@ public class PropertyBookingDto {
     private Integer id; // Có thể null nếu là booking mới
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") // Đảm bảo định dạng đúng
     private Date checkInDay;
-
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") // Đảm bảo định dạng đúng
     private Date checkOutDay;
     private int totalPerson;

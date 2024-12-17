@@ -23,6 +23,9 @@ public class MailService {
     @Autowired
     private JavaMailSender _mailSender;
 
+
+
+
     @Async
     public void sendMail(MultipartFile[] file, String to, String[] cc, String subject, String body) {
         try {

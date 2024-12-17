@@ -66,6 +66,8 @@ public class PropertyDto {
 
     private String selfCheckInType;
 
+    private String selfCheckInInstruction;
+
     private String coordinatesX;
 
     private String coordinatesY;
@@ -89,7 +91,4 @@ public class PropertyDto {
     private List<Integer> propertyAmenities;
 
     private String suggestion;
-
-    private Date createdAt;
-
 }

@@ -45,9 +45,21 @@ public class AuthCMController {
         return ResponseEntity.ok(customResult);
     }
 
+    @PostMapping("register_by_google")
+    public ResponseEntity<CustomResult> registerByGoogle(RegisterDto registerDto){
+        var customResult = authCMService.userRegisterByGoogle(registerDto);
+        return ResponseEntity.ok(customResult);
+    }
+
     @PostMapping("login")
     public ResponseEntity<CustomResult> login(LoginDto loginDto){
         var customResult = authCMService.login(loginDto);
+        return ResponseEntity.ok(customResult);
+    }
+
+    @PostMapping("login_sign_up_google")
+    public ResponseEntity<CustomResult> loginGoogle(String email){
+        var customResult = authCMService.loginOrSignUpByGoogle(email);
         return ResponseEntity.ok(customResult);
     }
 }

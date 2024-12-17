@@ -1,9 +1,6 @@
 package com.service.main.dto;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.service.main.entity.*;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,10 +8,11 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
+
 @AllArgsConstructor
-public class BookingDto {
+@NoArgsConstructor
+@Data
+public class AdminBookingDto {
     private Integer id;
 
     private Date checkInDay;
@@ -23,9 +21,9 @@ public class BookingDto {
 
     private int totalPerson;
 
-    private int adult;
-
     private int children;
+
+    private int adult;
 
     private String bookingType;
 
@@ -37,7 +35,11 @@ public class BookingDto {
 
     private String status;
 
-    private Property property;
+    private String propertyImage;
+
+    private String propertyName;
+
+    private String propertyCity;
 
     private RefundPolicy refundPolicy;
 
@@ -52,5 +54,4 @@ public class BookingDto {
     private List<Transaction> transactions;
 
     private List<BookDateDetail> bookDateDetails;
-
 }

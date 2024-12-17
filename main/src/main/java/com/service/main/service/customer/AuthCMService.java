@@ -9,6 +9,7 @@ import com.service.main.repository.UserRepository;
 import com.service.main.service.JwtService;
 import com.service.main.service.MailBodyService;
 import com.service.main.service.MailService;
+import com.service.main.service.StringGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,6 +40,9 @@ public class AuthCMService {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private StringGenerator stringGenerator;
 
     public CustomResult login(LoginDto loginDto) {
         try{
@@ -88,6 +92,39 @@ public class AuthCMService {
         }
     }
 
+    public CustomResult userRegisterByGoogle(RegisterDto registerDto) {
+        try{
+            var newUser = new User();
+            newUser.setFirstName(registerDto.getFirstName());
+            newUser.setLastName(registerDto.getLastName());
+            newUser.setEmail(registerDto.getEmail());
+            newUser.setPassword(passwordEncoder.encode(registerDto.getPassword()));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            newUser.setDob(formatter.parse(registerDto.getDob()));
+            newUser.setStatus(true);
+            newUser.setVerified(true);
+            userRepository.save(newUser);
+            return new CustomResult(200, "Success", newUser);
+        } catch (Exception ex) {
+            return new CustomResult(400, "Bad request" , ex.getMessage());
+        }
+    }
+
+    public CustomResult loginOrSignUpByGoogle(String email){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            if(user == null){
+                return new CustomResult(201, "create new account", null);
+            }else{
+                var token = jwtService.generateToken(new HashMap<>(), email, "user");
+                return new CustomResult(202, "login", token);
+            }
+        }catch (Exception e){
+            return new CustomResult(400, "Bad request", null);
+        }
+    }
+
     public CustomResult createAuthenticationCode(String email) {
         try{
             var account = userRepository.findUserByEmail(email);
@@ -99,10 +136,8 @@ public class AuthCMService {
             var newAuthenticationCode = new AuthenticationCode();
             newAuthenticationCode.setEmail(email);
             newAuthenticationCode.setExpiredTime(new Date(System.currentTimeMillis() + 1000 * 60 * 10));
-            SecureRandom secureRandom = new SecureRandom();
-            byte[] randomBytes = new byte[4];
-            secureRandom.nextBytes(randomBytes);
-            newAuthenticationCode.setCode(Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes).substring(0, 6));
+
+            newAuthenticationCode.setCode(stringGenerator.generateRandomString(6));
 
             mailService.sendMail(null, email, new String[]{email}, "Authentication code", mailBodyService.getRegisterAuthenticationMail(newAuthenticationCode.getCode()));
 
@@ -154,10 +189,6 @@ public class AuthCMService {
 
                 return new CustomResult(200, "Success", userAuthDto);
             }
-
-
-
-
             return new CustomResult(404, "User not found", null);
         }catch (Exception ex){
             return new CustomResult(400, "Bad request", null);

@@ -74,6 +74,9 @@ public class Property {
 
     private String selfCheckInType;
 
+    @Column(columnDefinition = "TEXT")
+    private String selfCheckInInstruction;
+
     private String coordinatesX;
 
     private String coordinatesY;

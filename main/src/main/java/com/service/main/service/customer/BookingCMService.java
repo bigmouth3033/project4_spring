@@ -4,6 +4,9 @@ import com.service.main.dto.*;
 import com.service.main.entity.*;
 import com.service.main.repository.*;
 import com.service.main.service.PagingService;
+import com.service.main.service.ScheduleService;
+import com.service.main.service.StringGenerator;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -14,10 +17,7 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -49,6 +49,14 @@ public class BookingCMService {
 
     @Autowired
     private PropertyNotAvailableDateRepository propertyNotAvailableDateRepository;
+
+    @Autowired
+    private ScheduleService scheduleService;
+
+    @Autowired
+    private StringGenerator stringGenerator;
+
+    private final ModelMapper modelMapper = new ModelMapper();
 
     public CustomPaging getReservedBooking(String email, String status, int pageNumber, int pageSize, String startDate, String endDate, Integer propertyId) {
         try {
@@ -257,22 +265,18 @@ public class BookingCMService {
     // code giu
 
     public CustomResult createBooking(PropertyBookingDto bookingDto) {
-
-        // Get Property
         var optionalProperty = propertyRepository.findById(bookingDto.getPropertyId());
         if (optionalProperty.isEmpty()) {
             return new CustomResult(404, "Property not found", null);
         }
         Property property = optionalProperty.get();
 
-        // Get customer
         var optionalCustomer = userRepository.findById(bookingDto.getCustomerId());
         if (optionalCustomer.isEmpty()) {
             return new CustomResult(404, "User not found", null);
         }
         User customer = optionalCustomer.get();
 
-        // Get host
         var optionalHost = userRepository.findById(bookingDto.getHostId());
         if (optionalHost.isEmpty()) {
             return new CustomResult(404, "Host not found", null);
@@ -286,14 +290,15 @@ public class BookingCMService {
         // Check booking type and badge
         if (property.getBookingType().equalsIgnoreCase("Instant")) {
             List<UserBadge> listUserBadge = (List<UserBadge>) customer.getUserBadges();
+            if( property.getInstantBookRequirement() != null){
+                var checkBadge = listUserBadge.stream()
+                        .filter(userBadge -> userBadge.getBadge().getId().equals(property.getInstantBookRequirement().getId()) )
+                        .findFirst()
+                        .orElse(null);
+                if (checkBadge == null) {
 
-            var checkBadge = listUserBadge.stream()
-                    .filter(userBadge -> userBadge.getBadge().getId() == property.getInstantBookRequirement().getId())
-                    .findFirst()
-                    .orElse(null);
-            if (checkBadge == null) {
-
-                return new CustomResult(404, "Bagde not match", null);
+                    return new CustomResult(404, "Bagde not match", null);
+                }
             }
         }
         // Get and check city available
@@ -371,6 +376,10 @@ public class BookingCMService {
                 if (dateDetails.getBooking().getBookingType().equals("reserved")) {
                     continue;
                 }
+                if (dateDetails.getBooking().getStatus().equals("denied")) {
+                    continue;
+                }
+
                 LocalDate dateBooked = LocalDate.ofInstant(dateDetails.getNight().toInstant(), ZoneId.systemDefault());
 
                 for (LocalDate bookingDate : listDateBookingDto) {
@@ -396,13 +405,27 @@ public class BookingCMService {
         booking.setTotalPerson(bookingDto.getAdult() + bookingDto.getChildren());
         booking.setProperty(property);
 
-        if (property.getBookingType().equalsIgnoreCase("instant")) {
-            booking.setStatus("ACCEPT");
-        } else if (property.getBookingType().equalsIgnoreCase("reserved")) {
-            booking.setStatus("PENDING");
-        }
+        Calendar calendarCheckIn = Calendar.getInstance();
+        calendarCheckIn.setTime(bookingDto.getCheckInDay());
+        calendarCheckIn.set(Calendar.HOUR_OF_DAY, Integer.parseInt(property.getCheckInAfter().split(":")[0])  );
+        calendarCheckIn.set(Calendar.MINUTE, Integer.parseInt(property.getCheckInAfter().split(":")[1]) );
+        booking.setCheckInDay(calendarCheckIn.getTime());
+
+        Calendar calendarCheckOut = Calendar.getInstance();
+        calendarCheckOut.setTime(bookingDto.getCheckOutDay());
+        calendarCheckOut.set(Calendar.HOUR_OF_DAY, Integer.parseInt(property.getCheckOutBefore().split(":")[0])  );
+        calendarCheckOut.set(Calendar.MINUTE, Integer.parseInt(property.getCheckOutBefore().split(":")[1]) );
+        booking.setCheckOutDay(calendarCheckOut.getTime());
+
+
+        String bookingCode = stringGenerator.generateRandomString();
+        booking.setBookingCode(bookingCode);
+        booking.setAmount(bookingDto.getAmount());
+        // Check booking type for add booking status
+        booking.setStatus("TRANSACTIONPENDDING");
 
         bookingRepository.save(booking);
+        scheduleService.scheduleBookingTimeout(booking.getId(), booking.getCreatedAt());
 
         long diffInMillies = Math.abs(endDate.getTime() - startDate.getTime());
         long days = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
@@ -412,7 +435,6 @@ public class BookingCMService {
 
         for (int i = 0; i < days; i++) {
             BookDateDetail dateDetail = new BookDateDetail();
-
 
             java.sql.Date sqlDate = new java.sql.Date(current.getTime());
             dateDetail.setNight(sqlDate);
@@ -425,9 +447,9 @@ public class BookingCMService {
             PropertyExceptionDate exceptionDate = listException.stream()
                     .filter(exception -> {
 
-                        String exceptionDateStr = sdf.format(exception.getDate()); // Giả sử exception.getDate() là java.sql.Date
-                        String sqlDateStr = sdf.format(sqlDate); // Giả sử sqlDate là java.sql.Date
-                        return exceptionDateStr.equals(sqlDateStr); // So sánh chuỗi ngày
+                        String exceptionDateStr = sdf.format(exception.getDate());
+                        String sqlDateStr = sdf.format(sqlDate);
+                        return exceptionDateStr.equals(sqlDateStr);
                     })
                     .findFirst()
                     .orElse(null);
@@ -441,13 +463,22 @@ public class BookingCMService {
 
             current = new Date(current.getTime() + TimeUnit.DAYS.toMillis(1));
         }
-        Transaction newTransaction = new Transaction();
-        newTransaction.setBooking(booking);
-        newTransaction.setAmount(bookingDto.getAmount());
-        newTransaction.setUser(customer);
-        newTransaction.setTransactionType("escrow");
-        transactionRepository.save(newTransaction);
+
         return new CustomResult(200, "Booking success", booking);
+    }
+
+    // Modelmapper to automatically map
+    public CustomResult getBooking(int bookingId) {
+        var optionalBooking = bookingRepository.findById(bookingId);
+        if (optionalBooking.isPresent()) {
+            Booking booking = optionalBooking.get();
+
+            // Map entity sang DTO
+            BookingResponseDto bookingDto = modelMapper.map(booking, BookingResponseDto.class);
+
+            return new CustomResult(200, "Find success", bookingDto);
+        }
+        return new CustomResult(404, "Booking not found", null);
     }
 
 }
