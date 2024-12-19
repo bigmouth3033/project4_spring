@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.service.main.service.MailService;
 import com.service.main.service.azure.models.MailPayload;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CountDownLatch;
@@ -13,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class AzureReceiver {
-    private static final String connectionString = "Endpoint=sb://eproject4.servicebus.windows.net/;SharedAccessKeyName=queue001;SharedAccessKey=aJ+5rh+8R5bjLteqvXf+FCZnj3xhEFSX8+ASbGxRGUw=;EntityPath=queue001";
+//    private static final String connectionString = "Endpoint=sb://eproject4.servicebus.windows.net/;SharedAccessKeyName=queue001;SharedAccessKey=aJ+5rh+8R5bjLteqvXf+FCZnj3xhEFSX8+ASbGxRGUw=;EntityPath=queue001";
     private static final String queueName = "queue001";
 
+    @Value("${azure.connectionString}")
+    private String connectionString;
 
     private static MailService _mailService;
 

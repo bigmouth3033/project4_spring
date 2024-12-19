@@ -4,13 +4,17 @@ import com.azure.messaging.servicebus.ServiceBusClientBuilder;
 import com.azure.messaging.servicebus.ServiceBusMessage;
 import com.azure.messaging.servicebus.ServiceBusSenderClient;
 import com.service.main.service.azure.models.MailPayload;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class AzureSender {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    static String connectionString = "Endpoint=sb://eproject4.servicebus.windows.net/;SharedAccessKeyName=queue001;SharedAccessKey=aJ+5rh+8R5bjLteqvXf+FCZnj3xhEFSX8+ASbGxRGUw=;EntityPath=queue001";
+//    static String connectionString = "Endpoint=sb://eproject4.servicebus.windows.net/;SharedAccessKeyName=queue001;SharedAccessKey=aJ+5rh+8R5bjLteqvXf+FCZnj3xhEFSX8+ASbGxRGUw=;EntityPath=queue001";
     static String queueName = "queue001";
+
+    @Value("${azure.connectionString}")
+    private String connectionString;
 
     public void sendMessage(MailPayload payload) {
          try {
