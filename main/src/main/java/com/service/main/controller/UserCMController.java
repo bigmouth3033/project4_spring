@@ -1,6 +1,5 @@
 package com.service.main.controller;
 
-<<<<<<< HEAD
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.UserInfoDto;
 import com.service.main.service.customer.UserCMService;
@@ -9,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-=======
 import com.google.storage.v2.CustomerEncryption;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.userDto.request.*;
@@ -30,31 +28,30 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
->>>>>>> 190256b8fdc6a836e005c9ddcf84518460f0e255
 
 @RestController
 @RequestMapping("userCM")
 public class UserCMController {
-<<<<<<< HEAD
 
     @Autowired
     private UserCMService userCMService;
 
     @GetMapping("get_user_info_by_id/{id}")
-    public UserInfoDto getUserInfo(@PathVariable int id){
+    public UserInfoDto getUserInfo(@PathVariable int id) {
         return userCMService.getUserInfoById(id);
     }
 
     @GetMapping("search_user_chat")
-    public List<UserInfoDto> searchUserChat(@RequestParam(required = false, defaultValue = "") String search, @RequestParam int userId, @RequestParam List<Long> friendsId){
-        return userCMService.searchForUser(userId, search,friendsId);
+    public List<UserInfoDto> searchUserChat(@RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam int userId, @RequestParam List<Long> friendsId) {
+        return userCMService.searchForUser(userId, search, friendsId);
     }
 
     @GetMapping("search_user_group_chat")
     public ResponseEntity<CustomResult> searchUserGroupChat(@RequestParam(required = false, defaultValue = "") String search, @RequestParam int userId){
         var customResult = userCMService.searchUserForGroupChat(userId, search);
         return ResponseEntity.ok(customResult);
-=======
+
     @Autowired
     private UserRepository _userRepository;
 
@@ -82,7 +79,6 @@ public class UserCMController {
             user.setFirstName(request.getFirstName());
             user.setLastName(request.getLastName());
             user = _userRepository.save(user);
-
 
             LegalNameResponse response = new LegalNameResponse();
             response.setFirstName(user.getFirstName());
@@ -258,7 +254,7 @@ public class UserCMController {
             MailPayload mailPayload = new MailPayload();
             mailPayload.setFile(null);
             mailPayload.setTo(user.getEmail());
-            String[] cc = {user.getEmail()};
+            String[] cc = { user.getEmail() };
             mailPayload.setCc(cc);
 
             String otpSubject = "Your OTP for Password Change Request";
@@ -300,7 +296,7 @@ public class UserCMController {
                     + "        <h2>Your OTP for Password Change</h2>"
                     + "        <p class=\"otp\">"
                     + otp
-                    + "</p>"  // Replace with actual OTP
+                    + "</p>" // Replace with actual OTP
                     + "        <p class=\"note\">This OTP is valid for 10 minutes and should not be shared with anyone.</p>"
                     + "    </div>"
                     + "</body>"
@@ -321,6 +317,5 @@ public class UserCMController {
             result.setData(null);
             return ResponseEntity.ok(result);
         }
->>>>>>> 190256b8fdc6a836e005c9ddcf84518460f0e255
     }
 }
