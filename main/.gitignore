@@ -33,3 +33,8 @@ build/
 ### VS Code ###
 .vscode/
 
+<<<<<<< HEAD
+=======
+src/main/resources/firebase.json
+src/main/resources/application.yaml
+>>>>>>> 190256b8fdc6a836e005c9ddcf84518460f0e255

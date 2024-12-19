@@ -45,6 +45,16 @@ public class User {
 
     private boolean status;
 
+    private String preferredName;
+    private String identityCardCountry;
+    private String identityCardFrontUrl;
+    private String identityCardBackUrl;
+    private String driverLicenseCountry;
+    private String driverLicenseFrontUrl;
+    private String driverLicenseBackUrl;
+    private String OTP;
+    private String newPassword;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<UserDocumentImage> userDocumentImages;
