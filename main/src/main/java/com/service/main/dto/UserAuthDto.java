@@ -32,4 +32,6 @@ public class UserAuthDto {
 
     private List<BadgeDto> badgeList;
 
+    private Date createdAt;
+
 }

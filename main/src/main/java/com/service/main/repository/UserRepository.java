@@ -14,6 +14,8 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, Integer> {
     User findUserByEmail(String email);
 
+    User findUserById(int id);
+
     @Query(value = "select u from User u where u.id != :userId and u.id not in :friendsId and (u.email like %:search% or CONCAT(u.firstName, ' ', u.lastName) like %:search% or :search is null ) order by u.id limit 20")
     List<User> searchChatUser(@Param("search") String search, @Param("userId") int userId, @Param("friendsId") List<Long> friendsId);
 

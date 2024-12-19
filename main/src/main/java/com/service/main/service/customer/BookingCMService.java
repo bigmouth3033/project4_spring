@@ -481,4 +481,258 @@ public class BookingCMService {
         return new CustomResult(404, "Booking not found", null);
     }
 
+
+    public CustomPaging getUserTrips(String email,
+                                     int pageNumber,
+                                     int pageSize,
+                                     String status,
+                                     String startDate,
+                                     String endDate){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            if(user == null){
+                var customPaging = new CustomPaging();
+                customPaging.setStatus(404);
+                customPaging.setMessage("Not found");
+                return customPaging;
+            }
+
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+
+            Date start = sf.parse(startDate);
+            Date end = sf.parse(endDate);
+
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("checkInDay").descending());
+
+            if(status.equals("checkout")){
+                var bookings = bookingRepository.findUserCheckOutTrip(user.getId(), new Date(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+            if(status.equals("stayin")){
+                var bookings = bookingRepository.findUserCurrentlyStayInTrip(user.getId(), new Date(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+
+            if(status.equals("upcoming")){
+                var bookings = bookingRepository.findUserUpcomingTrip(user.getId(), new Date(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+            if(status.equals("pending")){
+                var bookings = bookingRepository.findUserPendingReviewTrip(user.getId(), new Date(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+            if(status.equals("history")){
+                var bookings = bookingRepository.findUserHistoryTrip(user.getId(), new Date(),  start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+
+            var customPaging = new CustomPaging();
+            customPaging.setStatus(400);
+            customPaging.setMessage("wrong status");
+            return customPaging;
+
+        }catch (Exception e){
+            var customPaging = new CustomPaging();
+            customPaging.setStatus(400);
+            customPaging.setMessage(e.getMessage());
+            return customPaging;
+        }
+    }
+
+    public CustomResult getTripCount(String email,
+                                     String startDate,
+                                     String endDate){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            if(user == null){
+                return new CustomResult(404, "Not found", null);
+            }
+
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+
+            Date start = sf.parse(startDate);
+            Date end = sf.parse(endDate);
+
+            var tripCount = bookingRepository.getTripCounts(user.getId(), start, end, new Date() );
+
+            return new CustomResult(200, "OK", tripCount);
+        }catch (Exception e){
+            return new CustomResult(400, e.getMessage(), null);
+        }
+    }
+
+    public CustomPaging getUserReservationTrips(
+                                     String email,
+                                     int pageNumber,
+                                     int pageSize,
+                                     String status,
+                                     String startDate,
+                                     String endDate){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            if(user == null){
+                var customPaging = new CustomPaging();
+                customPaging.setStatus(404);
+                customPaging.setMessage("Not found");
+                return customPaging;
+            }
+
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+
+            Date start = sf.parse(startDate);
+            Date end = sf.parse(endDate);
+
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("checkInDay").descending());
+
+            if(status.equals("pending")){
+                var bookings = bookingRepository.findUserPendingReserved(user.getId(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+            if(status.equals("denied")){
+                var bookings = bookingRepository.findUserDeniedReservedTrip(user.getId(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+
+            if(status.equals("cancel")){
+                var bookings = bookingRepository.findUserCancelReservedTrip(user.getId(), start, end, pageable);
+
+                var customPaging =  pagingService.convertToCustomPaging(bookings, pageNumber, pageSize);
+
+                List<BookingDto> bookingsDtos = new ArrayList<>();
+
+                for(var booking: (List<Booking>) customPaging.getData()){
+                    var bookingDto = new BookingDto();
+                    BeanUtils.copyProperties(booking, bookingDto);
+                    bookingsDtos.add(bookingDto);
+                }
+                customPaging.setData(bookingsDtos);
+                return customPaging;
+            }
+
+
+
+
+            var customPaging = new CustomPaging();
+            customPaging.setStatus(400);
+            customPaging.setMessage("wrong status");
+            return customPaging;
+
+        }catch (Exception e){
+            var customPaging = new CustomPaging();
+            customPaging.setStatus(400);
+            customPaging.setMessage(e.getMessage());
+            return customPaging;
+        }
+    }
+
+    public CustomResult getReservedCount(String email,
+                                     String startDate,
+                                     String endDate){
+        try{
+            var user = userRepository.findUserByEmail(email);
+
+            if(user == null){
+                return new CustomResult(404, "Not found", null);
+            }
+
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+
+            Date start = sf.parse(startDate);
+            Date end = sf.parse(endDate);
+
+            var tripCount = bookingRepository.getReservedCount(user.getId(), start, end );
+
+            return new CustomResult(200, "OK", tripCount);
+        }catch (Exception e){
+            return new CustomResult(400, e.getMessage(), null);
+        }
+    }
+
 }

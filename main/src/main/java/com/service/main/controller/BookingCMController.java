@@ -5,6 +5,7 @@ import com.service.main.dto.CustomPaging;
 import com.service.main.dto.CustomResult;
 import com.service.main.dto.PropertyBookingDto;
 import com.service.main.service.customer.BookingCMService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.PUT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -75,5 +76,47 @@ public class BookingCMController {
         return ResponseEntity.ok(customResult);
     }
 
+    @GetMapping("get_user_booking")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<CustomPaging> getUserBooking(@RequestParam int pageNumber,
+                                                       @RequestParam int pageSize,
+                                                       @RequestParam String status,
+                                                       @RequestParam String startDate,
+                                                       @RequestParam String endDate) {
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var customPaging = bookingCMService.getUserTrips(email,pageNumber,pageSize, status, startDate, endDate);
+        return ResponseEntity.ok(customPaging);
+    }
+
+    @GetMapping("get_tripping_count")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<CustomResult> getTrippingCount(@RequestParam String startDate,
+                                                         @RequestParam String endDate) {
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var customResult = bookingCMService.getTripCount(email, startDate, endDate);
+        return ResponseEntity.ok(customResult);
+    }
+
+
+    @GetMapping("get_user_reservation")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<CustomPaging> getUserReservation(@RequestParam int pageNumber,
+                                                       @RequestParam int pageSize,
+                                                       @RequestParam String status,
+                                                       @RequestParam String startDate,
+                                                       @RequestParam String endDate) {
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var customPaging = bookingCMService.getUserReservationTrips(email,pageNumber,pageSize, status, startDate, endDate);
+        return ResponseEntity.ok(customPaging);
+    }
+
+    @GetMapping("get_reserved_count")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<CustomResult> getReservedCount(@RequestParam String startDate,
+                                                         @RequestParam String endDate) {
+        var email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var customResult = bookingCMService.getReservedCount(email, startDate, endDate);
+        return ResponseEntity.ok(customResult);
+    }
 
 }

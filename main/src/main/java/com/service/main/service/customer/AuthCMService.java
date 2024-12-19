@@ -169,8 +169,6 @@ public class AuthCMService {
         try{
             var user = userRepository.findUserByEmail(email);
             if(user != null){
-
-
                 var userAuthDto = new UserAuthDto();
                 BeanUtils.copyProperties(user, userAuthDto);
 

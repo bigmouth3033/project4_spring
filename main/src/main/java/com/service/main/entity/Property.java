@@ -134,9 +134,13 @@ public class Property {
     @JsonManagedReference
     private List<Favourite> favourites;
 
-
     //them 5/12
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Booking> bookings;
+
+    // them 19/12
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<Discount> discounts;
 }

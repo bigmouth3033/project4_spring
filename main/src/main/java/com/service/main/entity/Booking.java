@@ -82,4 +82,9 @@ public class Booking {
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<BookDateDetail> bookDateDetails;
+
+    @ManyToOne
+    @JoinColumn(name = "discountId")
+    @JsonBackReference
+    private Discount discount;
 }

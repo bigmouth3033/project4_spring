@@ -27,11 +27,13 @@ public class ChatSocketController {
         var roomUsers = chatService.getChatRoomById(message.getRoomId());
 
         if (roomUsers != null) {
+
+            chatService.saveUserMessage(message);
+
             for (Long id : roomUsers) {
                 simpMessagingTemplate.convertAndSendToUser(String.valueOf(id), "/private", message);
             }
 
-            chatService.saveUserMessage(message);
         }
 
         System.out.println(message.toString());

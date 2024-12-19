@@ -36,6 +36,11 @@ public class Review {
     private Date updatedAt = new Date();
 
     @ManyToOne
+    @JoinColumn(name = "bookingId")
+    @JsonBackReference
+    private Booking booking;
+
+    @ManyToOne
     @JoinColumn(name = "userId")
     @JsonBackReference
     private User user;

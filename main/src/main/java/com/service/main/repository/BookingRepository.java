@@ -1,6 +1,8 @@
 package com.service.main.repository;
 
 import com.service.main.dto.BookingCountDto;
+import com.service.main.dto.ReservedCountDto;
+import com.service.main.dto.TripCountDto;
 import com.service.main.entity.Booking;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -96,9 +98,9 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             "and (b.host.email like %:hostSearch% or CONCAT(b.host.firstName, ' ', b.host.lastName) like %:hostSearch% or :hostSearch is null) " +
             "and (b.property.refundPolicy.id in :refundIds or :refundIds is null) " +
             "and (b.bookingType = :bookingType or :bookingType = 'All' ) and " +
-            "((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) < function('date', b.checkOutDay)) or " +
-            "(function('date',:endDate) > function('date', b.checkInDay) and function('date',:endDate) < function('date', b.checkOutDay)) or" +
-            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) < function('date',:endDate) ))")
+            "((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))")
     Page<Booking> getAdminBookingList(@Param("isAdmin")boolean isAdmin,
                                       @Param("employeeManagedCity") List<Integer> employeeManagedCity,
                                       @Param("status") String status,
@@ -127,4 +129,157 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             "and function('datediff', :now, b.checkInDay) >= 2 " +
             "and size(b.transactions) = 1")
     List<Booking> getReadyToFinishPayment(@Param("now") Date now);
+
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and function('DATE', b.checkOutDay) = function('DATE', :date) " +
+            "and b.status = 'ACCEPT' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserCheckOutTrip(@Param("id") Integer id,
+                                       @Param("date") Date date,
+                                       @Param("startDate") Date startDate,
+                                       @Param("endDate") Date endDate,
+                                       Pageable pageable);
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and :date >= b.checkInDay " +
+            "and :date <= b.checkOutDay " +
+            "and b.status = 'ACCEPT' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserCurrentlyStayInTrip(@Param("id") Integer id,
+                                              @Param("date") Date date,
+                                              @Param("startDate") Date startDate,
+                                              @Param("endDate") Date endDate,
+                                              Pageable pageable);
+
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and :date < b.checkInDay " +
+            "and b.status = 'ACCEPT' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) < function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserUpcomingTrip(@Param("id") Integer id,
+                                              @Param("date") Date date,
+                                              @Param("startDate") Date startDate,
+                                              @Param("endDate") Date endDate,
+                                              Pageable pageable);
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and :date > b.checkOutDay " +
+            "and b.status = 'ACCEPT' " +
+            "and b.userReview is null " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) < function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserPendingReviewTrip(@Param("id") Integer id,
+                                       @Param("date") Date date,
+                                       @Param("startDate") Date startDate,
+                                       @Param("endDate") Date endDate,
+                                       Pageable pageable);
+
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and :date > b.checkOutDay " +
+            "and b.status = 'ACCEPT' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserHistoryTrip(@Param("id") Integer id,
+                                            @Param("date") Date date,
+                                            @Param("startDate") Date startDate,
+                                            @Param("endDate") Date endDate,
+                                            Pageable pageable);
+
+
+    @Query("select new com.service.main.dto.TripCountDto(" +
+            "(select count(p) from Booking p where p.status = 'ACCEPT' and function('DATE', p.checkOutDay) = function('DATE', :date) and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) ))  ), " +
+            "(select count(p) from Booking p where p.status = 'ACCEPT' and :date >= p.checkInDay and :date <= p.checkOutDay  and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) ))  ), " +
+            "(select count(p) from Booking p where p.status = 'ACCEPT' and :date < p.checkInDay  and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) )) ), " +
+            "(select count(p) from Booking p where p.status = 'ACCEPT' and :date > p.checkOutDay and p.userReview is null  and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) )) ), " +
+            "(select count(p) from Booking p where p.status = 'ACCEPT' and :date > p.checkOutDay  and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) )) ))"+
+            "from Booking p " +
+            "where p.customer.id = :id " +
+            "group by p.customer.id")
+    TripCountDto getTripCounts(@Param("id") Integer id,
+                               @Param("startDate") Date startDate,
+                               @Param("endDate") Date endDate,
+                               @Param("date") Date date);
+
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and b.status = 'PENDING' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserPendingReserved(@Param("id") Integer id,
+                                          @Param("startDate") Date startDate,
+                                          @Param("endDate") Date endDate,
+                                          Pageable pageable);
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and b.status = 'DENIED' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserDeniedReservedTrip(@Param("id") Integer id,
+                                             @Param("startDate") Date startDate,
+                                             @Param("endDate") Date endDate,
+                                             Pageable pageable);
+
+    @Query("select b " +
+            "from Booking b " +
+            "where b.customer.id = :id " +
+            "and b.status = 'CANCEL' " +
+            "and ((function('date',:startDate) >= function('date', b.checkInDay) and function('date',:startDate) <= function('date', b.checkOutDay)) or " +
+            "(function('date',:endDate) >= function('date', b.checkInDay) and function('date',:endDate) <= function('date', b.checkOutDay)) or" +
+            " (function('date', b.checkInDay) >= function('date',:startDate) and function('date', b.checkOutDay) <= function('date',:endDate) ))" +
+            "order by b.checkInDay")
+    Page<Booking> findUserCancelReservedTrip(@Param("id") Integer id,
+                                             @Param("startDate") Date startDate,
+                                             @Param("endDate") Date endDate,
+                                             Pageable pageable);
+
+
+    @Query("select new com.service.main.dto.ReservedCountDto(" +
+            "(select count(p) " +
+                "from Booking p where p.status = 'PENDING' " +
+                "and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) ))  ), " +
+            "(select count(p) " +
+                "from Booking p where p.status = 'DENIED'  " +
+                "and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) )) ), " +
+            "(select count(p) " +
+                "from Booking p where p.status = 'CANCEL' " +
+                "and ((function('date',:startDate) >= function('date', p.checkInDay) and function('date',:startDate) <= function('date', p.checkOutDay)) or (function('date',:endDate) >= function('date', p.checkInDay) and function('date',:endDate) <= function('date', p.checkOutDay)) or (function('date', p.checkInDay) >= function('date',:startDate) and function('date', p.checkOutDay) <= function('date',:endDate) )) ))"+
+            "from Booking p " +
+            "where p.customer.id = :id " +
+            "group by p.customer.id")
+    ReservedCountDto getReservedCount(@Param("id") Integer id,
+                                      @Param("startDate") Date startDate,
+                                      @Param("endDate") Date endDate);
 }

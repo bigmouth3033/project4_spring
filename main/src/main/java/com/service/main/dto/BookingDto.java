@@ -47,6 +47,10 @@ public class BookingDto {
 
     private User host;
 
+    private double amount;
+
+    private String bookingCode;
+
     private User customer;
 
     private List<Transaction> transactions;
