@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class AzureSender {
     private final ObjectMapper objectMapper = new ObjectMapper();
-//    static String connectionString = "Endpoint=sb://eproject4.servicebus.windows.net/;SharedAccessKeyName=queue001;SharedAccessKey=aJ+5rh+8R5bjLteqvXf+FCZnj3xhEFSX8+ASbGxRGUw=;EntityPath=queue001";
     static String queueName = "queue001";
 
     @Value("${azure.connectionString}")
